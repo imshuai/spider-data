@@ -34,7 +34,7 @@ func (i *imgccc) Dump() string {
 func init() {
 	rpool = &redis.Pool{
 		Dial: func() (redis.Conn, error) {
-			return redis.Dial("tcp", os.Args[1],
+			return redis.Dial("tcp", "127.0.0.1:6379",
 				redis.DialConnectTimeout(time.Second*6),
 				redis.DialDatabase(0),
 				redis.DialKeepAlive(time.Second*10))
