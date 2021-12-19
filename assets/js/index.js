@@ -16,32 +16,33 @@ var app = new Vue({
                 width: "auto"
             }],
             limit: 20,
-            currentPage: 1,
             data: [],
             total: 0,
+            currentPage: 1,
+            firstkey: "",
+            lastkey: "",
             project: "",
             loading: false
         }
     },
     methods: {
-        getData: function () {
+        getData: function (act, key) {
             if (this.project == "") {
                 return
             }
-            if (this.currentPage < 1) {
-                this.currentPage = 1
-            }
             this.loading = true;
-            console.log(this.currentPage);
-            axios.get("./api/" + this.project + "/" + this
-                    .currentPage, {
-                        params: {
-                            num: this.limit
-                        }
-                    })
+            axios.get("http://127.0.0.1:1325/api/" + this.project, {
+                    params: {
+                        act: act,
+                        num: this.limit,
+                        key: key
+                    }
+                })
                 .then((response) => {
                     this.data = response.data.data;
                     this.total = parseInt(response.data.total);
+                    this.firstkey = this.project + ":data:" + md5(this.data[0].name);
+                    this.lastkey = this.project + ":data:" + md5(this.data[this.data.length - 1].name);
                     this.loading = false;
                 })
                 .catch((error) => {
@@ -51,15 +52,30 @@ var app = new Vue({
         },
         sizeChange: function (val) {
             this.limit = val;
-            this.currentPage = 1;
+            localStorage.setItem("limit", this.limit);
             this.data = [];
-            this.getData();
+            this.getData("mount", this.firstkey);
         },
         currentChange: function (val) {
+            if (val < parseInt(localStorage.getItem("currentPage"))) {
+                this.prevClick(val);
+            } else {
+                this.nextClick(val);
+            }
+        },
+        prevClick: function (val) {
+            this.getData("prev", this.firstkey);
             this.currentPage = val;
-            localStorage.setItem("cPage", val)
-            this.data = [];
-            this.getData();
+            localStorage.setItem("firstkey", this.firstkey);
+            localStorage.setItem("lastkey", this.lastkey);
+            localStorage.setItem("currentPage", val);
+        },
+        nextClick: function (val) {
+            this.getData("next", this.lastkey);
+            this.currentPage = val;
+            localStorage.setItem("firstkey", this.firstkey);
+            localStorage.setItem("lastkey", this.lastkey);
+            localStorage.setItem("currentPage", val);
         },
         handleClick: function (row) {
             window.open('javascript:window.name;', '<script>location.replace("' + row
@@ -76,9 +92,9 @@ var app = new Vue({
                     .then(res => {
                         this.$notify({
                             'type': 'success',
-                            'title':'提示',
+                            'title': '提示',
                             'message': '删除 ' + row.name + ' ' + res.data.status,
-                            'duration':1500
+                            'duration': 1500
                         });
                         if (res.data.status == "成功") {
                             this.data.splice(idx, 1);
@@ -92,21 +108,46 @@ var app = new Vue({
                 this.$notify({
                     "title": "提示",
                     "message": "操作取消",
-                    "type":"info"
+                    "type": "info"
                 });
             });
 
         },
         projectChange: function () {
-            this.getData();
+            this.firstkey = "";
+            this.lastkey = "";
+            localStorage.setItem("project", this.project);
+            localStorage.setItem("firstkey", this.firstkey);
+            localStorage.setItem("lastkey", this.lastkey);
+            this.getData("mount", this.firstkey);
         }
     },
     mounted() {
-        var page = localStorage.getItem("cPage");
+        var project = localStorage.getItem("project");
+        if (project == null) {
+            project = ""
+        }
+        this.project = project;
+        var limit = localStorage.getItem("limit");
+        if (limit == null) {
+            limit = 20
+        }
+        this.limit = parseInt(limit);
+        var page = localStorage.getItem("currentPage");
         if (page == null) {
-            page = "1"
+            page = 1
         }
         this.currentPage = parseInt(page);
-        this.getData();
+        var firstkey = localStorage.getItem("firstkey");
+        if (firstkey == null) {
+            firstkey = ""
+        }
+        this.firstkey = firstkey;
+        var lastkey = localStorage.getItem("lastkey");
+        if (lastkey == null) {
+            lastkey = ""
+        }
+        this.lastkey = lastkey;
+        this.getData("mount", this.firstkey);
     }
 });
