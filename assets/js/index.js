@@ -31,7 +31,7 @@ var app = new Vue({
                 return
             }
             this.loading = true;
-            axios.get("http://127.0.0.1:1325/api/" + this.project, {
+            axios.get("/api/" + this.project, {
                     params: {
                         act: act,
                         num: this.limit,
@@ -88,7 +88,7 @@ var app = new Vue({
                 cancelButtonText: '取消',
                 type: 'warning',
             }).then(action => {
-                axios.delete('./api/' + this.project + "/" + md5(row.name))
+                axios.delete('/api/' + this.project + "/" + md5(row.name))
                     .then(res => {
                         this.$notify({
                             'type': 'success',
